@@ -120,43 +120,47 @@ print(f"International Phase 2: ${avg_intl_ph2_rev:.2f}")
 
 proj_opps = pd.read_excel("case_study_data.xlsx", sheet_name="Projected Sales Opportunities")
 
-# Create and fill new columns for projected revenue and sales
+# Create and fill new columns for projected sales and revenue
 
-dp1_rev = proj_opps["Domestic Prod 1 Rev"]
-dp2_rev = proj_opps["Domestic Prod 2 Rev"]
-ip1_rev = proj_opps["International Prod 1 Rev"]
-ip2_rev = proj_opps["International Prod 2 Rev"]
-total_rev = proj_opps["Total Revenue"]
+# Create sales columns
 
-dp1_sales = proj_opps["Domestic Prod 1 Sales"]
-dp2_sales = proj_opps["Domestic Prod 2 Sales"]
-ip1_sales = proj_opps["International Prod 1 Sales"]
-ip2_sales = proj_opps["International Prod 2 Sales"]
-total_sales = proj_opps["Total Sales"]
+exp_sales_per_opp_dom = (domestic_conv_rate * avg_ph1_sales_per_conversion) + (domestic_conv_rate * avg_ph2_sales_per_conversion)
+exp_sales_per_opp_intl = (intl_conv_rate * avg_ph1_sales_per_conversion) + (intl_conv_rate * avg_ph2_sales_per_conversion)
 
-proj_opps["Domestic Prod 1 Rev"] = ""
-proj_opps["Domestic Prod 2 Rev"] = ""
-proj_opps["International Prod 1 Rev"] = ""
-proj_opps["International Prod 2 Rev"] = ""
+proj_opps["Domestic Prod 1 Sales"] = exp_sales_per_opp_dom * proj_opps["Domestic Product 1"]
+proj_opps["Domestic Prod 2 Sales"] = exp_sales_per_opp_dom * proj_opps["Domestic Product 2"]
+proj_opps["International Prod 1 Sales"] = exp_sales_per_opp_intl * proj_opps["International Product 1"]
+proj_opps["International Prod 2 Sales"] = exp_sales_per_opp_intl * proj_opps["International Product 2"]
 
-proj_opps["Domestic Prod 1 Sales"] = ""
-proj_opps["Domestic Prod 2 Sales"] = ""
-proj_opps["International Prod 1 Sales"] = ""
-proj_opps["International Prod 2 Sales"] = ""
+# Create revenue columns
 
+exp_rev_per_sale_dom = (
+    (avg_domestic_ph1_rev * avg_ph1_sales_per_conversion)
+  + (avg_domestic_ph2_rev * avg_ph2_sales_per_conversion)
+) / (avg_ph1_sales_per_conversion + avg_ph2_sales_per_conversion)
 
-for i in range(len(proj_opps)):
-    proj_opps.loc[i, "Domestic Prod 1 Rev"] = 
-    proj_opps.loc[i, "Domestic Prod 2 Rev"] = 
-    proj_opps.loc[i, "International Prod 1 Rev"] = 
-    proj_opps.loc[i, "International Prod 2 Rev"] = 
+exp_rev_per_sale_int = (
+(avg_intl_ph1_rev * avg_ph1_sales_per_conversion)
+  + (avg_intl_ph2_rev * avg_ph2_sales_per_conversion)
+) / (avg_ph1_sales_per_conversion + avg_ph2_sales_per_conversion)
 
-    proj_opps.loc[i, "Domestic Prod 1 Sales"] = 
-    proj_opps.loc[i, "Domestic Prod 2 Sales"] = 
-    proj_opps.loc[i, "International Prod 1 Sales"] = 
-    proj_opps.loc[i, "International Prod 2 Sales"] = 
+proj_opps["Domestic Prod 1 Rev"] = proj_opps["Domestic Prod 1 Sales"] * exp_rev_per_sale_dom
+proj_opps["Domestic Prod 2 Rev"] = proj_opps["Domestic Prod 2 Sales"] * exp_rev_per_sale_dom
+proj_opps["International Prod 1 Rev"] = proj_opps["International Prod 1 Sales"] * exp_rev_per_sale_int
+proj_opps["International Prod 2 Rev"] = proj_opps["International Prod 2 Sales"] * exp_rev_per_sale_int
+
+# Create Total Sales and Total Revenue
+
+proj_opps["Total Sales"] = (proj_opps["Domestic Prod 1 Sales"] + proj_opps["Domestic Prod 2 Sales"] + 
+                            proj_opps["International Prod 1 Sales"] + proj_opps["International Prod 2 Sales"])
+
+proj_opps["Total Revenue"] = (proj_opps["Domestic Prod 1 Rev"] + proj_opps["Domestic Prod 2 Rev"]+ 
+                              proj_opps["International Prod 1 Rev"] + proj_opps["International Prod 2 Rev"])
 
 # Print preview to confirm all columns are present and contain correct data
 
 print(proj_opps.head())
 print(proj_opps.columns)
+
+# Plot projection 
+
