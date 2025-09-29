@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Import sales and revenue sheets
 sales_opps = pd.read_excel("case_study_data.xlsx", sheet_name="Sales Opportunities")
@@ -114,7 +115,7 @@ print(f"Domestic Phase 2: ${avg_domestic_ph2_rev:.2f}")
 print(f"International Phase 1: ${avg_intl_ph1_rev:.2f}")
 print(f"International Phase 2: ${avg_intl_ph2_rev:.2f}")
 
-# 3. Create the model for projected growth:
+# Create the model for projected growth:
 
 # Access the Project Opportunities sheet
 
@@ -162,5 +163,97 @@ proj_opps["Total Revenue"] = (proj_opps["Domestic Prod 1 Rev"] + proj_opps["Dome
 print(proj_opps.head())
 print(proj_opps.columns)
 
-# Plot projection 
+# Forecast Revenue based on 'Projected Sales Opportunities'
 
+# Convert sales and opps to datetime
+
+sales_revenue["Revenue Date"] = pd.to_datetime(sales_revenue["Revenue Date"])
+proj_opps["Sales Opportunity Month"] = pd.to_datetime(proj_opps["Sales Opportunity Month"])
+
+# Ensure both 'History' and 'Projection' are in month format
+
+hist_rev_m = (sales_revenue.groupby(pd.Grouper(key="Revenue Date", freq="MS"))["Revenue"].sum().rename("History"))
+proj_rev_m = (proj_opps.groupby(pd.Grouper(key="Sales Opportunity Month", freq="MS"))["Total Revenue"].sum().rename("Projection"))
+
+# Combine history and projection for plotting
+
+rev_df = pd.concat([hist_rev_m, proj_rev_m], axis=1)
+
+# Plot
+
+plt.figure(figsize=(10,5))
+rev_df["History"].plot()
+rev_df["Projection"].plot()
+
+# Create vertical line at the last actual month
+
+last_hist = hist_rev_m.dropna().index.max()
+if pd.notna(last_hist):
+    plt.axvline(last_hist, linestyle="--")
+
+plt.title("Revenue: History vs Projection (Monthly)")
+plt.xlabel("Month")
+plt.ylabel("Revenue")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Plot projected opportunies as a check for dip
+
+# Convert to Datetime
+
+proj_opps["Sales Opportunity Month"] = pd.to_datetime(proj_opps["Sales Opportunity Month"])
+
+# Total opportunities per month (sum across all 4 products)
+
+proj_opps["Total Opps"] = (proj_opps["Domestic Product 1"] + proj_opps["Domestic Product 2"]
+                           + proj_opps["International Product 1"]+ proj_opps["International Product 2"])
+
+# Plot
+
+plt.figure(figsize=(10,5))
+plt.plot(proj_opps["Sales Opportunity Month"], proj_opps["Total Opps"], label="Projected Opportunities")
+
+plt.title("Projected Opportunities Over Time")
+plt.xlabel("Month")
+plt.ylabel("Total Opportunities")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Forecast 5 years of Sales and Revenue, where sales opportunity volume grows organically
+
+# Create 'Open Date' column for datetime formatted opportunity dates
+
+sales_opps["Open Date"] = pd.to_datetime(sales_opps["Opportunity Open Date"])
+
+# Create variable that counts number of opportunities per month
+
+opps_hist = sales_opps.groupby(pd.Grouper(key="Open Date", freq="MS"))["Opportunity ID"].count()
+
+# Remove any zeros from history
+
+opps_hist = opps_hist[opps_hist > 0] 
+
+# Calculate mean growth rate of dataset 
+
+avg_growth_rate = opps_hist.pct_change().mean()
+
+# Create 5 years (60 months) of dates and empty list to capture forecast opportunities
+
+future_months = pd.date_range("2016-08-01", periods=60, freq="MS")
+organic_opps = []
+
+# Create varible that is set to the last recorded value of opportunities 
+
+last_val = opps_hist.iloc[-1]
+
+# Loop through future and append opportunity growth projections
+
+for m in future_months:
+    last_val = last_val * (1 + avg_growth_rate)
+    organic_opps.append(last_val)
+
+# Create a series forecasting opportunities over future months
+
+organic_opps = pd.Series(organic_opps, index=future_months)
