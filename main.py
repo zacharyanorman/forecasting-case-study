@@ -96,19 +96,15 @@ print(f"The historic international conversion rate is: {(intl_conv_rate*100):.2f
 
 # Domestic vs international revenues
 
-# Domestic Phase 1
 domestic_ph1_sales = sales_revenue[(sales_revenue["Domestic"] == 1) & (sales_revenue["Phase"] == "Phase 1")]
 avg_domestic_ph1_rev = domestic_ph1_sales["Revenue"].mean()
 
-# Domestic Phase 2
 domestic_ph2_sales = sales_revenue[(sales_revenue["Domestic"] == 1) & (sales_revenue["Phase"] == "Phase 2")]
 avg_domestic_ph2_rev = domestic_ph2_sales["Revenue"].mean()
 
-# International Phase 1
 intl_ph1_sales = sales_revenue[(sales_revenue["International"] == 1) & (sales_revenue["Phase"] == "Phase 1")]
 avg_intl_ph1_rev = intl_ph1_sales["Revenue"].mean()
 
-# International Phase 2
 intl_ph2_sales = sales_revenue[(sales_revenue["International"] == 1) & (sales_revenue["Phase"] == "Phase 2")]
 avg_intl_ph2_rev = intl_ph2_sales["Revenue"].mean()
 
@@ -117,3 +113,50 @@ print(f"Domestic Phase 1: ${avg_domestic_ph1_rev:.2f}")
 print(f"Domestic Phase 2: ${avg_domestic_ph2_rev:.2f}")
 print(f"International Phase 1: ${avg_intl_ph1_rev:.2f}")
 print(f"International Phase 2: ${avg_intl_ph2_rev:.2f}")
+
+# 3. Create the model for projected growth:
+
+# Access the Project Opportunities sheet
+
+proj_opps = pd.read_excel("case_study_data.xlsx", sheet_name="Projected Sales Opportunities")
+
+# Create and fill new columns for projected revenue and sales
+
+dp1_rev = proj_opps["Domestic Prod 1 Rev"]
+dp2_rev = proj_opps["Domestic Prod 2 Rev"]
+ip1_rev = proj_opps["International Prod 1 Rev"]
+ip2_rev = proj_opps["International Prod 2 Rev"]
+total_rev = proj_opps["Total Revenue"]
+
+dp1_sales = proj_opps["Domestic Prod 1 Sales"]
+dp2_sales = proj_opps["Domestic Prod 2 Sales"]
+ip1_sales = proj_opps["International Prod 1 Sales"]
+ip2_sales = proj_opps["International Prod 2 Sales"]
+total_sales = proj_opps["Total Sales"]
+
+proj_opps["Domestic Prod 1 Rev"] = ""
+proj_opps["Domestic Prod 2 Rev"] = ""
+proj_opps["International Prod 1 Rev"] = ""
+proj_opps["International Prod 2 Rev"] = ""
+
+proj_opps["Domestic Prod 1 Sales"] = ""
+proj_opps["Domestic Prod 2 Sales"] = ""
+proj_opps["International Prod 1 Sales"] = ""
+proj_opps["International Prod 2 Sales"] = ""
+
+
+for i in range(len(proj_opps)):
+    proj_opps.loc[i, "Domestic Prod 1 Rev"] = 
+    proj_opps.loc[i, "Domestic Prod 2 Rev"] = 
+    proj_opps.loc[i, "International Prod 1 Rev"] = 
+    proj_opps.loc[i, "International Prod 2 Rev"] = 
+
+    proj_opps.loc[i, "Domestic Prod 1 Sales"] = 
+    proj_opps.loc[i, "Domestic Prod 2 Sales"] = 
+    proj_opps.loc[i, "International Prod 1 Sales"] = 
+    proj_opps.loc[i, "International Prod 2 Sales"] = 
+
+# Print preview to confirm all columns are present and contain correct data
+
+print(proj_opps.head())
+print(proj_opps.columns)
