@@ -94,3 +94,26 @@ intl_conv_rate = intl_converted / intl_opps
 print(f"The historic domestic conversion rate is: {(domestic_conv_rate*100):.2f}%")
 print(f"The historic international conversion rate is: {(intl_conv_rate*100):.2f}%")
 
+# Domestic vs international revenues
+
+# Domestic Phase 1
+domestic_ph1_sales = sales_revenue[(sales_revenue["Domestic"] == 1) & (sales_revenue["Phase"] == "Phase 1")]
+avg_domestic_ph1_rev = domestic_ph1_sales["Revenue"].mean()
+
+# Domestic Phase 2
+domestic_ph2_sales = sales_revenue[(sales_revenue["Domestic"] == 1) & (sales_revenue["Phase"] == "Phase 2")]
+avg_domestic_ph2_rev = domestic_ph2_sales["Revenue"].mean()
+
+# International Phase 1
+intl_ph1_sales = sales_revenue[(sales_revenue["International"] == 1) & (sales_revenue["Phase"] == "Phase 1")]
+avg_intl_ph1_rev = intl_ph1_sales["Revenue"].mean()
+
+# International Phase 2
+intl_ph2_sales = sales_revenue[(sales_revenue["International"] == 1) & (sales_revenue["Phase"] == "Phase 2")]
+avg_intl_ph2_rev = intl_ph2_sales["Revenue"].mean()
+
+print("Average revenue per sale:")
+print(f"Domestic Phase 1: ${avg_domestic_ph1_rev:.2f}")
+print(f"Domestic Phase 2: ${avg_domestic_ph2_rev:.2f}")
+print(f"International Phase 1: ${avg_intl_ph1_rev:.2f}")
+print(f"International Phase 2: ${avg_intl_ph2_rev:.2f}")
