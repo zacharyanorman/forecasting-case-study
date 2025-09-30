@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Save sales and revenue sheets as variables
+# Load sales and revenue sheets as variables
 sales_opps = pd.read_excel("case_study_data.xlsx", sheet_name="Sales Opportunities")
 revenue = pd.read_excel("case_study_data.xlsx", sheet_name="Revenue")
 
