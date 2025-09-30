@@ -133,8 +133,8 @@ monthly_changes = hist_rev_m.tail(24).pct_change()
 avg_growth_rate = monthly_changes.tail(24).mean()
 print(f"Average monthly growth rate (organic): {avg_growth_rate:.2%}")
 
-# Forecast next 24 months (2 years) starting after the last history point
-future_months = pd.date_range(last_hist_month + pd.offsets.MonthBegin(), periods=24, freq="MS")
+# Forecast next 36 months (3 years) starting after the last history point
+future_months = pd.date_range(last_hist_month + pd.offsets.MonthBegin(), periods=36, freq="MS")
 
 # Start from the last actual historical revenue
 last_val = hist_rev_m.dropna().iloc[-1] if len(hist_rev_m) > 0 else 0.0
