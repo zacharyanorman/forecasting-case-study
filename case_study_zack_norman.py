@@ -50,12 +50,11 @@ domestic_converted = sales_opps.loc[
 
 intl_converted = sales_opps.loc[
     (sales_opps["International"] == 1) & (sales_opps["Opportunity ID"].isin(converted_ids)),
-    "Opportunity ID"
-].nunique()
+    "Opportunity ID"].nunique()
 
 # Conversion rates
-domestic_conv_rate = domestic_converted / domestic_opps if domestic_opps > 0 else 0
-intl_conv_rate = intl_converted / intl_opps if intl_opps > 0 else 0
+domestic_conv_rate = domestic_converted / domestic_opps
+intl_conv_rate = intl_converted / intl_opps
 
 print(f"Domestic conversion rate: {domestic_conv_rate*100:.2f}%")
 print(f"International conversion rate: {intl_conv_rate*100:.2f}%")
@@ -94,12 +93,8 @@ proj_opps["International Prod 1 Rev"] = proj_opps["International Prod 1 Sales"] 
 proj_opps["International Prod 2 Rev"] = proj_opps["International Prod 2 Sales"] * avg_rev_per_sale_int
 
 # Step 4: total projected revenue
-proj_opps["Total Revenue"] = (
-    proj_opps["Domestic Prod 1 Rev"]
-  + proj_opps["Domestic Prod 2 Rev"]
-  + proj_opps["International Prod 1 Rev"]
-  + proj_opps["International Prod 2 Rev"]
-)
+proj_opps["Total Revenue"] = (proj_opps["Domestic Prod 1 Rev"] + proj_opps["Domestic Prod 2 Rev"]
+                              + proj_opps["International Prod 1 Rev"] + proj_opps["International Prod 2 Rev"])
 
 # Step 5: aggregate monthly projection
 proj_rev_m = proj_opps.groupby(pd.Grouper(key="Sales Opportunity Month", freq="MS"))["Total Revenue"].sum()
@@ -116,9 +111,7 @@ rev_df = pd.concat([hist_rev_m, proj_rev_m], axis=1)
 plt.figure(figsize=(10, 5))
 rev_df["History"].plot(label="History")
 rev_df["Projection"].plot(label="Projection")
-last_hist_month = hist_rev_m.dropna().index.max()
-if pd.notna(last_hist_month):
-    plt.axvline(last_hist_month, linestyle="--", color="gray", label="History Cutoff")
+plt.axvline(last_hist_month, linestyle="--", color="gray", label="History Cutoff")
 plt.title("Revenue: History vs Projection")
 plt.xlabel("Month")
 plt.ylabel("Revenue")
@@ -137,7 +130,7 @@ print(f"Average monthly growth rate (organic): {avg_growth_rate:.2%}")
 future_months = pd.date_range(last_hist_month + pd.offsets.MonthBegin(), periods=36, freq="MS")
 
 # Start from the last actual historical revenue
-last_val = hist_rev_m.dropna().iloc[-1] if len(hist_rev_m) > 0 else 0.0
+last_val = hist_rev_m.dropna().iloc[-1]
 
 organic_values = []
 val = last_val
