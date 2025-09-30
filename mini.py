@@ -8,7 +8,7 @@ sales_opps = pd.read_excel("case_study_data.xlsx", sheet_name="Sales Opportuniti
 revenue = pd.read_excel("case_study_data.xlsx", sheet_name="Revenue")
 proj_opps = pd.read_excel("case_study_data.xlsx", sheet_name="Projected Sales Opportunities")
 
-# 2) Merge revenue with opportunities and prepare date fields
+# 2) Left join revenue with opportunities as new df
 sales_revenue = revenue.merge(sales_opps, how="left", on="Opportunity ID")
 
 # Make sure the important date columns are recognized as datetime objects
@@ -18,8 +18,6 @@ sales_opps["Open Date"] = pd.to_datetime(sales_opps["Opportunity Open Date"])
 proj_opps["Sales Opportunity Month"] = pd.to_datetime(proj_opps["Sales Opportunity Month"])
 
 # 3) Assign Phase 1 vs Phase 2
-# If Phase 2 date exists and is on/before revenue date → Phase 2
-# Otherwise → Phase 1
 
 phase_list = []
 for i in range(len(sales_revenue)):
@@ -66,6 +64,7 @@ print(f"International conversion rate: {intl_conv_rate*100:.2f}%")
 sales_counts_by_opp = sales_revenue.groupby("Opportunity ID")["Revenue"].size()
 avg_sales_per_conversion = sales_counts_by_opp.mean()
 print(f"Average sales events per converted opportunity: {avg_sales_per_conversion:.2f}")
+print("\n")
 
 # Average revenue per sale by region
 avg_rev_per_sale_dom = sales_revenue.loc[sales_revenue["Domestic"] == 1, "Revenue"].mean()
@@ -74,6 +73,7 @@ avg_rev_per_sale_int = sales_revenue.loc[sales_revenue["International"] == 1, "R
 print("Average revenue per sale:")
 print(f"Domestic: ${avg_rev_per_sale_dom:,.2f}")
 print(f"International: ${avg_rev_per_sale_int:,.2f}")
+print("\n")
 
 # 5) Build the projection using Projected Opportunities
 
@@ -101,7 +101,7 @@ proj_opps["Total Revenue"] = (
   + proj_opps["International Prod 2 Rev"]
 )
 
-# Aggregate monthly projection
+# Step 5: aggregate monthly projection
 proj_rev_m = proj_opps.groupby(pd.Grouper(key="Sales Opportunity Month", freq="MS"))["Total Revenue"].sum()
 proj_rev_m.name = "Projection"
 
@@ -110,68 +110,20 @@ hist_rev_m = sales_revenue.groupby(pd.Grouper(key="Revenue Date", freq="MS"))["R
 hist_rev_m.name = "History"
 last_hist_month = hist_rev_m.dropna().index.max()
 
-# 7) Organic growth MVP
-
-# Count historical opportunities by month
-opps_hist = sales_opps.groupby(pd.Grouper(key="Open Date", freq="MS"))["Opportunity ID"].count()
-opps_hist = opps_hist[opps_hist > 0]
-
-# Calculate simple average monthly growth rate
-monthly_changes = opps_hist.pct_change().dropna()
-if len(monthly_changes) > 0:
-    avg_growth_rate = monthly_changes.mean()
-else:
-    avg_growth_rate = 0.0
-
-print(f"Organic avg monthly growth rate: {avg_growth_rate:.3%}")
-
-# Forecast next 24 months of opportunities
-future_months = pd.date_range(last_hist_month + pd.offsets.MonthBegin(), periods=24, freq="MS")
-last_val = opps_hist.tail(12).mean() if len(opps_hist) > 0 else 0.0
-if pd.isna(last_val):
-    last_val = 0.0
-
-organic_opps_list = []
-val = last_val
-for i in range(len(future_months)):
-    val = val * (1 + avg_growth_rate)
-    organic_opps_list.append(val)
-
-organic_opps = pd.Series(organic_opps_list, index=future_months)
-
-# Split organic opportunities into domestic vs international
-domestic_share = sales_opps["Domestic"].mean()
-intl_share = 1 - domestic_share
-
-organic_dom_sales = organic_opps * domestic_share * exp_sales_per_opp_dom
-organic_int_sales = organic_opps * intl_share * exp_sales_per_opp_int
-
-organic_dom_rev = organic_dom_sales * avg_rev_per_sale_dom
-organic_int_rev = organic_int_sales * avg_rev_per_sale_int
-
-organic_rev = (organic_dom_rev + organic_int_rev).rename("Organic")
-
-# 8) Combine and plot
-rev_df = pd.concat([hist_rev_m, proj_rev_m, organic_rev], axis=1)
+# 7) Combine and plot: History vs Projection
+rev_df = pd.concat([hist_rev_m, proj_rev_m], axis=1)
 
 plt.figure(figsize=(10, 5))
 rev_df["History"].plot(label="History")
 rev_df["Projection"].plot(label="Projection")
-rev_df["Organic"].plot(label="Organic (MVP)", linestyle="--")
+last_hist_month = hist_rev_m.dropna().index.max()
 if pd.notna(last_hist_month):
     plt.axvline(last_hist_month, linestyle="--", color="gray", label="History Cutoff")
-plt.title("Revenue: History vs Projection vs Organic")
+plt.title("Revenue: History vs Projection")
 plt.xlabel("Month")
 plt.ylabel("Revenue")
 plt.legend()
 plt.tight_layout()
 plt.show()
 
-# 9) Print summary stats for narration
-print("\nSummary")
-print(f"Domestic conversion rate: {domestic_conv_rate:.3f}")
-print(f"International conversion rate: {intl_conv_rate:.3f}")
-print(f"Avg sales per converted opp: {avg_sales_per_conversion:.2f}")
-print(f"Avg revenue per sale Domestic: {avg_rev_per_sale_dom:,.2f}")
-print(f"Avg revenue per sale International: {avg_rev_per_sale_int:,.2f}")
-print(f"Organic MVP avg monthly growth rate: {avg_growth_rate:.3%}")
+# 8) Simple Organic Model
