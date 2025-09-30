@@ -1,5 +1,8 @@
+# Import libraries
+
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Import sales and revenue sheets
 sales_opps = pd.read_excel("case_study_data.xlsx", sheet_name="Sales Opportunities")
@@ -11,8 +14,7 @@ sales_revenue = revenue.merge(sales_opps, how='left',on='Opportunity ID')
 # Create new column "Phase"
 sales_revenue["Phase"] = ""
 
-# Add either "Phase 1" or "Phase 2" to "Phase" column, 
-# depending on when sale occured 
+# Add either "Phase 1" or "Phase 2" to "Phase" column, depending on when sale occured 
 
 for i in range(len(sales_revenue)):
     rev_date = sales_revenue.loc[i, "Revenue Date"]
@@ -209,7 +211,7 @@ proj_opps["Sales Opportunity Month"] = pd.to_datetime(proj_opps["Sales Opportuni
 proj_opps["Total Opps"] = (proj_opps["Domestic Product 1"] + proj_opps["Domestic Product 2"]
                            + proj_opps["International Product 1"]+ proj_opps["International Product 2"])
 
-# Plot
+# Plot opportunities and show plot
 
 plt.figure(figsize=(10,5))
 plt.plot(proj_opps["Sales Opportunity Month"], proj_opps["Total Opps"], label="Projected Opportunities")
@@ -223,37 +225,76 @@ plt.show()
 
 # Forecast 5 years of Sales and Revenue, where sales opportunity volume grows organically
 
-# Create 'Open Date' column for datetime formatted opportunity dates
+# Create 'Open Date' column filled with historical opportunities data
 
 sales_opps["Open Date"] = pd.to_datetime(sales_opps["Opportunity Open Date"])
-
-# Create variable that counts number of opportunities per month
-
 opps_hist = sales_opps.groupby(pd.Grouper(key="Open Date", freq="MS"))["Opportunity ID"].count()
+opps_hist = opps_hist[opps_hist > 0]
 
-# Remove any zeros from history
+# Calculate monthly % changes across full history
 
-opps_hist = opps_hist[opps_hist > 0] 
+r = opps_hist.pct_change().dropna()
 
-# Calculate mean growth rate of dataset 
+# Calculate geometric mean growth rate (in lieu of arithmetic mean)
 
-avg_growth_rate = opps_hist.pct_change().mean()
+avg_growth_rate = np.exp(np.log1p(r).mean()) - 1
+print(f"The average geometric growth rate is: {(avg_growth_rate * 100):.2f}")
 
-# Create 5 years (60 months) of dates and empty list to capture forecast opportunities
+# Populate future months
+#
+#
 
 future_months = pd.date_range("2016-08-01", periods=60, freq="MS")
-organic_opps = []
+last_val = opps_hist.tail(12).mean()
+growth_factor = (1 + avg_growth_rate) ** pd.RangeIndex(1, len(future_months) + 1)
+organic_opps = pd.Series(last_val * growth_factor.values, index=future_months)
 
-# Create varible that is set to the last recorded value of opportunities 
+# 
 
-last_val = opps_hist.iloc[-1]
+domestic_share = sales_opps["Domestic"].mean()
+intl_share = 1 - domestic_share
 
-# Loop through future and append opportunity growth projections
+organic_domestic_opps = organic_opps * domestic_share
+organic_international_opps = organic_opps * intl_share
 
-for m in future_months:
-    last_val = last_val * (1 + avg_growth_rate)
-    organic_opps.append(last_val)
+# 
 
-# Create a series forecasting opportunities over future months
+organic_domestic_sales = organic_domestic_opps * exp_sales_per_opp_dom
+organic_international_sales = organic_international_opps * exp_sales_per_opp_intl
 
-organic_opps = pd.Series(organic_opps, index=future_months)
+# Calculate organic sales and revenue
+
+organic_domestic_revenue = organic_domestic_sales * exp_rev_per_sale_dom
+organic_international_revenue = organic_international_sales * exp_rev_per_sale_int
+
+organic_sales_total = organic_domestic_sales + organic_international_sales
+organic_revenue_total = organic_domestic_revenue + organic_international_revenue
+
+# 
+
+organic_rev_m = organic_revenue_total.rename("Organic")
+
+rev_compare = pd.DataFrame({
+    "History":   hist_rev_m,
+    "Projected": proj_rev_m,
+    "Organic":   organic_rev_m
+})
+
+# 
+
+plt.figure(figsize=(10,5))
+rev_compare["History"].plot(label="History")
+rev_compare["Projected"].plot(label="Projected")
+rev_compare["Organic"].plot(label="Organic")
+last_hist = hist_rev_m.dropna().index.max()
+
+# Creat, label, and show Revenue Forecast
+
+plt.axvline(last_hist, linestyle="--", color="gray", label="History Cutoff")
+plt.title("Revenue Forecast: History vs Projection vs Organic")
+plt.xlabel("Month")
+plt.ylabel("Revenue")
+plt.legend()
+plt.tight_layout()
+
+plt.show()
