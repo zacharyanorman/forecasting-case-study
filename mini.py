@@ -128,11 +128,10 @@ plt.show()
 
 # 8) Simple Organic Model
 
-# Calculate average monthly growth rate from history
-monthly_changes = hist_rev_m.pct_change()
-avg_growth_rate = monthly_changes.tail(36).mean()
+# Calculate average monthly growth rate from history (last 2 years)
+monthly_changes = hist_rev_m.tail(24).pct_change()
+avg_growth_rate = monthly_changes.tail(24).mean()
 print(f"Average monthly growth rate (organic): {avg_growth_rate:.2%}")
-print(f"The monthly change is: {monthly_changes}")
 
 # Forecast next 24 months (2 years) starting after the last history point
 future_months = pd.date_range(last_hist_month + pd.offsets.MonthBegin(), periods=24, freq="MS")
@@ -147,11 +146,6 @@ for i in range(len(future_months)):
     organic_values.append(val)
 
 organic_rev_m = pd.Series(organic_values, index=future_months, name="Organic")
-
-# Debug check
-print("\nOrganic forecast preview:")
-print(organic_rev_m.head())
-print(organic_rev_m.tail())
 
 # Combine into one dataframe (outer join keeps all dates)
 rev_df = pd.concat([hist_rev_m, proj_rev_m, organic_rev_m], axis=1, join="outer")
